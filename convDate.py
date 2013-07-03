@@ -72,4 +72,6 @@ def mdy_date_to_Int( dateStr, timeStr ):
   return seconds
     
 if __name__ == '__main__':
-  print( mdy_date_to_Int( '12:29 PM', '5/13/2013' ))
+  converted_value = mdy_date_to_Int( '12:29 PM', '5/13/2013' )
+  assert(converted_value == 1359937740)
+

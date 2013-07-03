@@ -1,21 +1,25 @@
 #!/usr/bin/python3
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
-import sqlite3, re
+
+import sys, re
 
 from os import stat, path  
 from time import ctime
 from sqlite3 import connect, OperationalError
-from hashlib import md5
 
-####################CONSTANTS####################
+###################################CONSTANTS###################################
 TABLE_ALREADY_EXISTS = 0xf
 TABLE_CREATED = ( ~TABLE_ALREADY_EXISTS )
+songsTableName = "songs"
+
+#Retrieving the current module's file name
 current_file_search = re.search('.*/(\w+\.py)$',__file__)
 if current_file_search:
   current_file_name = current_file_search.groups(1)[0]
 else: #Hard coded value here
   current_file_name = 'createDb.py'
-#################################################
+###############################################################################
+
 def create_monitor_time_src():
   #This creates the file from which the first database creation date is stored
   #This date is essential to keep tracking of when track-monitoring began
@@ -26,55 +30,106 @@ def create_monitor_time_src():
   sDate.flush()
   sDate.close()
 
-#Create the storage database if none existant
+def getTableName(tableName):
+  #Custom function that will be used in the SQL statement to return the 
+  #name of the table passed in  as an argument
+  #Minimally checks that the string being passed in could not potential 
+  #poison the DB
+  if (not tableName.isalpha()):
+   #Potential poison to the db as the table name for this simple case should 
+   #be a plain-alphabetic name.
+   raise Exception("Invalid table name or potential injection detected")
+   sys.exit(-1)
+
+  return tableName
+
 def getConCursor( dbPath ):
+  #Create the storage database if none existant, and log 
+  #the start date of monitoring
   if ( not path.exists( dbPath )):
-    create_monitor_time_src()
+    create_monitor_time_src() #Kick off period monitoring
     f = open( dbPath, "w" )
     f.close()
 
   conn = connect( dbPath ) 
+
+  #Creates the custom function that will be used to query the songsTable name
+  #It takes in one parameter
+  conn.create_function('getTableName',1,getTableName) 
   cur  = conn.cursor()
-  createTable( 'songs', conn )
+  #cur.execute( "select getTableName(?)",("SONGS",))
+
+  #Querying if the table exists
+  cur.execute("select name from sqlite_master where type='table' and name=?",
+   ('songs',))
+
+  tableNameQuery = cur.fetchone()
+
+  if ( not tableNameQuery ):#Create the table if it doesn't exist
+   if ( createTable( songsTableName, conn ) == TABLE_ALREADY_EXISTS ):
+     #Potential conflict/error detected here, handle
+     sys.stderr.write("Could not create the SQL table, but it was reported")
+     sys.stderr.write(" as already created\n")
+     sys.exit(-2)
+     
   return conn, cur
 
-def createTable( tableName, cursor ):
+def createTable( tableName, connection):
+  #Input: tableName ->String for the table name to be created
+  #        connection object
+  #Returns: status to signify if the table was created or if it existed already
   try:
-    cursor.execute( "CREATE TABLE songs( artist text, title text, trackHash text, playTimes )" )
-    cursor.commit()
+    connection.execute( 
+     "CREATE TABLE songs( artist text, title text, trackHash text, playTimes )")
+    connection.commit() #Commit the newly made change to the DB
   except OperationalError as e:
     return TABLE_ALREADY_EXISTS
 
-  return TABLE_CREATED
+  else:
+    return TABLE_CREATED
 
-def lookupQuery( title, artist, cursor ):
-  cursor.execute( 'SELECT playTimes FROM songs where title=? AND artist=?', ( title, artist ))
+def lookupQuery( title, artist, cursor,tableName='songs' ):
+  #Input: Query parameters: title,artist. Cursor object
+  #Returns: A tuple of playTimes matching the search parameters
+  cursor.execute( 
+    "SELECT playTimes FROM songs where title=? AND artist=?",(title, artist,))
+
   results = cursor.fetchone()
+
   return results
 
 def addEntry( tableName, entry, cursor ):
+  #Input: 'entry'->Four field tuple of form:
+  #          ( ArtistName,SongTitle,TrackHash,newPlayTime )
+  #       cursor object of the database
+  #Queries the database by songTitle and ArtistName for a tuple of previous
+  #logged playtimes, and appends the newtime into the joined field 
+  #Returns: None
   artist,title,trackHash,newPlayTime = entry
   queryPlayTimes = lookupQuery( title, artist, cursor )
-  if ( queryPlayTimes ):
-    recorded_times = list( queryPlayTimes )
-    joinedTimes  = ' '.join( recorded_times )
-    #print( joinedTimes )
-    if ( newPlayTime not in  joinedTimes ):
-       recorded_times.append( newPlayTime )
-       convStrTimes = ' '.join( [ str( i ) for  i in recorded_times ] )
-       cursor.execute( 'UPDATE songs set playTimes=? where artist=? AND trackHash=?', 
-       ( convStrTimes, artist, trackHash ))
-          
-    return;
-  cursor.execute( 'INSERT INTO songs VALUES( ?,?,?,? )', 
-                ( artist,title, trackHash,newPlayTime )) 
-def first( a ):
-  return a[0]
 
-def last( a ):
-  return a[-1]
+  if ( queryPlayTimes ): 
+    duplicates = filter(lambda entry : entry == newPlayTime,queryPlayTimes)
+    try:
+      duplicates.__next__() #Invoke the next method for available iterators: 
+      #throws a 'StopIteration' error to signify no content available
+      #hence detection for no duplicates detected
+
+    except StopIteration as e: #No duplicates detected
+      #Append the new play time to the previously logged times
+      recorded_times.append( newPlayTime )
+      convStrTimes = ' '.join([ i for  i in queryPlayTimes ])
+      cursor.execute( #Update the DB
+	'UPDATE songs set playTimes=? where artist=? AND trackHash=?', 
+	( convStrTimes, artist, trackHash ))
+
+  else: #First time seeing the track
+     cursor.execute( 'INSERT INTO songs VALUES( ?,?,?,? )', 
+           ( artist,title, trackHash,newPlayTime )) 
 
 def rankTracks( cursor ):
+  #Input: cursor the source database
+  #Returns: A report on the ranks of the tracks played in the form of a string
   UNIMPORTED_MONITOR = True
   while UNIMPORTED_MONITOR:
     try:
@@ -87,41 +142,57 @@ def rankTracks( cursor ):
       sys.exit(-10)
     else:
       UNIMPORTED_MONITOR = False
-  cursor.execute( 'SELECT * FROM songs' )
+
   ranks = dict()
   ranksStr = ''
+
   for row in cursor.execute( 'SELECT * FROM songs' ):
     artist,title,trackHash,playTimes = row
-    listPTimes = re.findall( r'(\d+)', playTimes )
-    nTimes = len( listPTimes )
-    listPTimes.insert( 0, nTimes )
-    ranks[ tuple( listPTimes) ] = ( title, artist )
+    timesPlayedList = re.findall( r'(\d+)', playTimes )
+
+    nPlayTimes      = len( timesPlayedList )
+    timesPlayedList.insert( 0, nPlayTimes )
+
+    #Create a key mapping (number_of_plays,plays) => (title,artist)
+    ranks[ tuple( timesPlayedList) ] = ( title, artist )
+
+  #Ranks sorted in ascending order
   rankKeys = sorted( list( ranks.keys()), reverse=True )
-  i = 1
+  
+  if not rankKeys: return None
+
   nLine =  ( '*'*80 ).center( 100, ' ' )
-  ranksStr +=  'TopPlayed Tracks by the BearRocks.com'.center( 100, ' '  )+'\n'
+  ranksStr += 'TopPlayed Tracks by the BearRocks.com'.center( 100, ' '  )+'\n'
   ranksStr +=  ( 'as last updated at: %s. Monitored from %s'%( ctime(), 
 	  monitor_start.MONITOR_START_DATE) ).center( 100, ' ' ) + '\n'
+
   ranksStr +=  nLine +'\n'
   ranksStr +=  '{h:<4} {pos:>5}  {t:<40}  {a:<40}{pTs:<25}\n'.format( 
       h='#', pos='Rank', pTs='PlayCounts',t='Title',a='Artist' )
-  lastLen = 0
-  realPos = 1
+
+  realPos      = 1 #Popularity/Rank of each entry relative to other entries
+  runningIndex = 1 #Ascending order index of entries, starting at '1'
+  lastNPlays   = 0
+
   for eachKey in rankKeys:
     title,artist = ranks[eachKey]
-    count,pTimes = eachKey[0],eachKey[1:]
-    if ( lastLen != count ):
-      realPos = i
-    ranksStr +=  '{seqPos:<5} {pos:<5} {t:<40} {a:<40} {pTs}\n'.format( seqPos=i, 
-      pos=realPos, pTs=count,t=title,a=artist )
-    i+=1
-    lastLen = count
+    nPlayCounts,pTimes = eachKey[0],eachKey[1:]
+
+    if ( lastNPlays != nPlayCounts ):
+      realPos = runningIndex
+
+    ranksStr += '{seqPos:<5} {pos:<5} {t:<40} {a:<40} {pTs}\n'.format( 
+	seqPos=runningIndex, pos=realPos, pTs=nPlayCounts,t=title,a=artist )
+      
+    runningIndex += 1
+    lastNPlays = nPlayCounts
 
   return ranksStr
+
 def main():
-  dbPath = "songDatabase1.db" 
+  dbPath = "songDatabase.db" 
   conn,cursor = getConCursor( dbPath )
-  rankTracks( cursor )
+  print(rankTracks( cursor ))
 
 if __name__ == '__main__':
   main()
