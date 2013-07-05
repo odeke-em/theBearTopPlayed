@@ -13,4 +13,6 @@
 #'monitor_start.py' is auto-generated and contains the date that is logged
 #                   as the start monitor date
 #
-#'ranks.rk': Typical file output after crawling 'http://www.thebearrocks.com/broadcasthistory.aspx, as played on radio station 'thebearrocks'
+#'ranks.rk': Typical file output after crawling 
+#            'http://www.thebearrocks.com/broadcasthistory.aspx, 
+#           as played on Edmonton radio station 'The Bear Rocks'
