@@ -11,11 +11,7 @@ import re
 UBUNTU_UAGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:13.0) ' +\
                 'Gecko/20100101 Firefox/13.0'
 
-<<<<<<< HEAD
-def site_opener( url, stderr,errorVerbosity, user_agent=UBUNTU_UAGENT ):
-=======
 def site_opener(url, stderr,errorVerbosity, user_agent=UBUNTU_UAGENT):
->>>>>>> d726d7deb3a82fd599172344699dbe98561a6e90
   #Input: url->string, stderr -> file stream to log errors, 
   #       errorVerbosity ->Boolean to determine if
   #        any errors and excepts can be logged to standard error
@@ -35,24 +31,16 @@ def site_opener(url, stderr,errorVerbosity, user_agent=UBUNTU_UAGENT):
 
     data = modified_opener.open(url) #Use the modified url opener to open url
   except Exception as e:
-<<<<<<< HEAD
-    if ( errorVerbosity ): #Log the error to std
-=======
-    if (errorVerbosity): #Log the error to std
->>>>>>> d726d7deb3a82fd599172344699dbe98561a6e90
 
+    if (errorVerbosity): #Log the error to std
       #Possibly corrupted url or no internet connectionerr
       if (isinstance(e,urllib.error.URLError)): 
         errMsg = "Unknown service %s or check your Internet connection"%(url)
       else:
         errMsg = "While opening url '%s' error: %s encountered"%(
           url, e.__str__())
-    
-<<<<<<< HEAD
-      stderr.write( "\033[31m%s\033[00m\n"%( errMsg ))
-=======
+
       stderr.write("\033[31m%s\033[00m\n"%(errMsg))
->>>>>>> d726d7deb3a82fd599172344699dbe98561a6e90
       stderr.flush()
     return None
 
@@ -61,13 +49,8 @@ def site_opener(url, stderr,errorVerbosity, user_agent=UBUNTU_UAGENT):
     decoded_data = outdata.decode() #Try decoding the data
   except Exception as e:
     #Manage error later#
-<<<<<<< HEAD
-    if ( errorVerbosity ):
-      stderr.write( "Decoding error: errorBelow: %s\n"%( e.__str__() ))
-=======
     if (errorVerbosity):
       stderr.write("Decoding error: errorBelow: %s\n"%(e.__str__()))
->>>>>>> d726d7deb3a82fd599172344699dbe98561a6e90
       stderr.flush()
     return None
   else: return decoded_data
