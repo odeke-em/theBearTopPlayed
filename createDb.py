@@ -55,7 +55,7 @@ def getConCursor(dbPath):
   #Create the storage database if none existant, and log 
   #the start date of monitoring
   if (not path.exists(dbPath)):
-    create_monitor_time_src(20) #Kick off period monitoring
+    create_monitor_time_src() #Kick off period monitoring
     f = open(dbPath, "w")
     f.close()
 

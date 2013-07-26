@@ -53,7 +53,7 @@ def updateDb(timeout_mins, PRINT_RANKS_BOOL=True):
       #Write the ranks to file
       f = open(RANKS_STORAGE, 'w')
       f.write(ranksCompiled)
-            f.flush()
+      f.flush()
       f.close()
 
       #Notify that the ranks have been written to file
