@@ -102,32 +102,34 @@ def saveJSON(dbName,destName):
  
 def archiveLoadedData():
   #Utility to manage archiving and deletion of logged files 
-  jsonCreationSuccess = saveJSON(resources.dbPath,resources.JSON_DUMP_NAME)
+  jsonCreationSuccess = saveJSON(resources.dbPath,resources.JSON_DUMP_PATH)
   archivingStatus = False
-  if jsonCreationSuccess:
-    dirSrc = mover.createSourceDirName()
-    #Time to archive the created json, DB and ranks file
-    if not mover.makeReportPackage(
-      fileMatches=["monitor_start*","*.db","*.json","*rk"],
-      baseName=dirSrc,copyOnly=False):
-      #Success here
-      inodeGetter = mover.getInode
-      if inodeGetter('.') != inodeGetter(dirSrc): 
-        if mover.canWrite(dirSrc):
-          deleteFunc = os.unlink
-          if mover.isDir(dirSrc): 
-            deleteFunc = mover.delTree
-          try: 
-            deleteFunc(dirSrc)
-          except Exception as e: 
-            sys.stderr.write("%s \n"%(e.__str__()))
-            sys.stderr.write("Failed to delete %s\n"%(dirSrc))
-        else:
-          sys.stderr.write("You don't have write permissions for %s\n"%(dirSrc)) 
-      archivingStatus = True
-  else:
+  if not jsonCreationSuccess:
     print("Could not create a json file of the played tracks")
-  return archivingStatus
+    return False
+
+  dirSrc = mover.createSourceDirName()
+  #Time to archive the created json, DB and ranks file
+  if not mover.makeReportPackage(
+    fileMatches=[
+      "monitor_start*",resources.dbPath,resources.JSON_DUMP_PATH,
+      resources.RANKS_DUMP_PATH],
+    baseName=dirSrc,copyOnly=False):
+    #Success here
+    inodeGetter = mover.getInode
+    if inodeGetter('.') != inodeGetter(dirSrc): 
+      if mover.canWrite(dirSrc):
+        deleteFunc = os.unlink
+        if mover.isDir(dirSrc): 
+          deleteFunc = mover.delTree
+        try: 
+          deleteFunc(dirSrc)
+        except Exception as e: 
+          sys.stderr.write("%s \n"%(e.__str__()))
+          sys.stderr.write("Failed to delete %s\n"%(dirSrc))
+      else:
+       sys.stderr.write("You don't have write permissions for %s\n"%(dirSrc)) 
+  return True
 
 if __name__ == '__main__':
   print(archiveLoadedData())

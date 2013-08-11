@@ -4,19 +4,12 @@
 
 import os, re, sys, shutil, glob
 from stat import S_ISDIR, S_ISREG
-from datetime import datetime
-'''
-try:
-  import monitor_start
-except ImportError as e:
-  sys.stderr.write(
-    "Failed to import file containing monitoring start date\n"
-  )
-  sys.exit(-1)
-'''
+
+import resources
+from convDate import getIntDate
 ###########################CONSTANTS HERE################################
 TAR_SUFFIX = "tar"
-BASE_DIR_NAME = "rankBack"
+BASE_DIR_NAME = resources.RANKS_TAR_BASE_PATH
 #########################################################################
 existantPath = lambda path: path and os.path.exists(path)
 
@@ -34,17 +27,10 @@ statDict  = lambda path : os.stat(path)
 isDir = lambda path: existantPath(path) and S_ISDIR(statDict(path).st_mode)
 isReg = lambda path: existantPath(path) and S_ISREG(statDict(path).st_mode)
 
-def getIntDate():
-  #Returns YYYYMMDD as an integer
-  timeNow = datetime.now()
-  dateStr = "{y:0>4}{m:0>2}{d:0>2}".format(
-    y=timeNow.year,m=timeNow.month,d=timeNow.day
-  )
-
-  return int(dateStr)
 
 #Returns the base_suffix with the creation date suffixed
-createSourceDirName = lambda baseName=BASE_DIR_NAME:"%s%s"%(baseName,getIntDate())
+createSourceDirName = \
+  lambda baseName=BASE_DIR_NAME:"%s%s"%(baseName,getIntDate())
 
 #Delete tree
 delTree = lambda path : existantPath(path) and shutil.rmtree(path)
@@ -113,7 +99,6 @@ def copyMatchesToDir(suffixList, dest,COPY_ONLY=True):
   rejectedPaths = []
   for eachMatch in targetMatches:
     moveFile(eachMatch, dest, COPY_ONLY)
-  #print(list(rejectedPaths))
   return rejectedPaths
 
 def main():
@@ -122,15 +107,16 @@ def main():
   )
 
 def makeReportPackage(fileMatches=[],baseName=None,copyOnly=True):
+  #Returns 0 on successful archiving of fileMatches
   if not (fileMatches): 
     print("No files to archive")
-    return None
+    return -1
 
   dirSource = baseName
   if not baseName: 
     dirSource = createSourceDirName()
 
-  if not dirSource: return None
+  if not dirSource: return -1
  
   rejectedPaths = copyMatchesToDir(fileMatches, dirSource, copyOnly)
 
@@ -139,7 +125,8 @@ def makeReportPackage(fileMatches=[],baseName=None,copyOnly=True):
   if not archResult:
     print("Failed to create archive from directory %s",dirSource)
     return -1
-  print("Created archive %s"%(archResult))
+
+  sys.stderr.write("\033[32mCreated archive %s\033[00m\n"%(archResult))
   return 0
 
 if __name__ == '__main__':

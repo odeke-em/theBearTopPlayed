@@ -116,6 +116,11 @@ def main():
 
   sys.stderr.write("\nConnecting to storage Database %s ....\n"%(resources.dbPath))
   conn,cursor = createDb.getConCursor(resources.dbPath)
+
+  if not (conn and cursor):
+    sys.stderr.write("Connection to the database unsuccessful\n")
+    return None
+
   sys.stderr.write("Connection to the database successful\n")
 
   sys.stderr.write(

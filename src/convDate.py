@@ -2,7 +2,7 @@
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import re
-import time
+from datetime import datetime
 
 ######################################################################
 FEB_IDX = 2 #February's index in the Gregorian calendar
@@ -32,12 +32,7 @@ base_seconds = lambda : mdy_date_to_Int("00:00 AM", "01/01/1970")
 
 def get_days_in_month(monthIdx, year):
   #Input:  A month's index, and year, both integers.
-  #Output: The number of days in that month.
-  #Given a month's index check if it is February, and from 
-  #that return the number of days that February has depending
-  #on if it is leap year or not.
-  #Else check if the month is in SAJN(30 day - months) classification.
-  #Else return 31
+  #Return: The number of days in that month.
   if (monthIdx is FEB_IDX):
     if (isLeap(year)):
       return 29
@@ -50,9 +45,19 @@ def get_days_in_month(monthIdx, year):
 
 ##########################################################################
 
+def getIntDate():
+  #Returns YYYYMMDD as an integer
+  timeNow = datetime.now()
+  dateStr = "{y:0>4}{m:0>2}{d:0>2}".format(
+    y=timeNow.year,m=timeNow.month,d=timeNow.day
+  )
+
+  return int(dateStr)
+
 def concatDate(timeStr, dateStr):
   #Input: timeStr => HH:MM AM/PM form
   #       dateStr => dd/mm/yyyy  form
+  #Output: YYYYMMDDHHMM string
   hh_mm_apm = re.findall(r'(\d+):(\d+)\s(\w+)', timeStr)[0]  
   m_d_y = re.findall(r'(\d+)/(\d+)/(\d\d\d\d)', dateStr)[0]
 

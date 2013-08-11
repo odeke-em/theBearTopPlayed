@@ -16,3 +16,7 @@
 #'ranks.rk': Typical file output after crawling 
 #            'http://www.thebearrocks.com/broadcasthistory.aspx, 
 #           as played on Edmonton radio station 'The Bear Rocks'
+#At the end of every collection period, a *.tar archive is made containing
+#the ranks in file ranks.rk, the data dump in JSON format, as well
+#as the original sqlite3 database. Also the file with the monitor dates
+#is packaged as well

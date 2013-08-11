@@ -1,26 +1,14 @@
 #!/usr/bin/python3
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
 
-
 import sys, re, subprocess
-from optparse import OptionParser
 from time import sleep, ctime, time
 
 import thebear
+import resources
+from parser import cliParser
 
-RANKS_STORAGE = 'ranks.rk' #File to which retrieved ranks will be written
-
-def cliParser():
-  #Input: None
-  #Returns: parser for updateDb
-  parser = OptionParser()
-  parser.add_option('-t','--timeout',dest='timeout',
-    help="Set the timeout in minutes between database updates", default=1)
-  parser.add_option('-d', '--displayranks', dest='displayranks',
-    help="Set whether to print out ranks every after a data collection",
-    default=True,action="store_false")
-  args,options = parser.parse_args()
-  return args,options
+RANKS_STORAGE = resources.RANKS_DUMP_PATH
 
 def updateDb(timeout_mins, PRINT_RANKS_BOOL=True):
   #Calls module 'thebear.main' and prints ranks retrieved if 'PRINT_RANKS'
