@@ -3,18 +3,20 @@
 
 songTableCreation = \
     "CREATE TABLE song( \
-	id int AUTO_INCREMENT not null, \
+	id integer AUTO_INCREMENT,\
 	title text not null, \
-	artist, url text, \
+	artist text,\
+	primary key (id),\
+	url text, \
 	check (id > 0) \
     );"
 
 playTimeTableCreation = \
     "CREATE TABLE playTime( \
-	id int  AUTO_INCREMENT not null, \
+	id integer AUTO_INCREMENT,\
 	pTime text not null, \
 	song_id int not null, \
-	primary key(id), \
+	primary key (id),\
 	foreign key (song_id) references song(id), \
 	check (id > 0)\
     );"
