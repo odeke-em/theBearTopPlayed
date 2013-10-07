@@ -3,17 +3,17 @@
 
 songTableCreation = \
     "CREATE TABLE song( \
-	id integer AUTO_INCREMENT,\
+	id integer AUTO_INCREMENT not null,\
 	title text not null, \
 	artist text,\
-	primary key (id),\
 	url text, \
+	primary key (id),\
 	check (id > 0) \
     );"
 
 playTimeTableCreation = \
     "CREATE TABLE playTime( \
-	id integer AUTO_INCREMENT,\
+	id integer AUTO_INCREMENT not null,\
 	pTime text not null, \
 	song_id int not null, \
 	primary key (id),\
