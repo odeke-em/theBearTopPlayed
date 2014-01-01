@@ -55,7 +55,7 @@ def generateDB(dbName):
     return True
 
 def main():
-  generateDB('songDatabase.db')
+  generateDB('newSongDatabase.db')
 
 if __name__ == '__main__':
   main()
