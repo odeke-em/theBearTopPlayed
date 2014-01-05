@@ -134,7 +134,7 @@ def addEntry(tableName, entry, cursor):
     strPlayTimes = "%s %s"%(queryPlayTimesString,newPlayTime)
 
     cursor.execute(#Update the DB
-     'UPDATE playTimes set playTimes=? where song_id=? AND trackHash=? AND url=?',
+     'UPDATE songs set playTimes=? where artist=? AND trackHash=? AND url=?',
      (strPlayTimes, artist, trackHash,trackUrl)
    )
 
