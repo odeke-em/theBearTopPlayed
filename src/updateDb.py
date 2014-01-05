@@ -20,6 +20,7 @@ def updateDb(timeout_mins, PRINT_RANKS_BOOL=True):
   #Returns: None
   assert(hasattr(timeout_mins, '__divmod__')) #Only either a float or int
   updateRunning = True
+  iterationCount = 0
 
   while updateRunning:
     try:
@@ -44,18 +45,21 @@ def updateDb(timeout_mins, PRINT_RANKS_BOOL=True):
       f.flush()
       f.close()
 
+      iterationCount += 1
+      sys.stderr.write("IterationCount: %d\n"%(iterationCount))
+
       #Notify that the ranks have been written to file
       sys.stderr.write("Ranks written to file: '%s'\n"%(RANKS_STORAGE))
 
       if (PRINT_RANKS_BOOL):
           print(ranksCompiled)
-
       sleepBeforeRefresh(timeout_mins)
 
     except KeyboardInterrupt as e:
       #status,output = subprocess.getstatusoutput(wifiManage('unblock'))
       print("Ctrl-C applied. Exiting...")
       updateRunning=False
+  # return iterationCount
 
 #Returns arguments for function to kill/turnon wifi for the sleep duration
 #Args: 'up' or 'down'
