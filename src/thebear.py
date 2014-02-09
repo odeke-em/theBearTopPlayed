@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import re, sys, sqlite3
@@ -9,7 +9,7 @@ from hashlib import md5
 import sitereader
 import createDb
 import convDate
-import resources
+import resources as rscs
 
 ###############################PATTERNS_AND_REGEXS##############################
 BEAR_ROCKS_URL="http://www.thebearrocks.com/broadcasthistory.aspx"
@@ -61,7 +61,7 @@ def ripTrackInfo(tdList, dateOfTrack):
   if (artist and songTitle and timeStamp):
     dateInt = convDate.concatDate(timeStamp, dateOfTrack)
 
-    trackHash = md5(bytes(songTitle, 'utf-8')).hexdigest()
+    trackHash = md5(bytes(songTitle, *rscs.byteEncodingArgs)).hexdigest()
 
     return artist, songTitle, trackHash, str(dateInt), songUrl
 
@@ -114,8 +114,8 @@ def main():
         fullTr += [line]
       fullTrs += [fullTr]
 
-  sys.stderr.write("\nConnecting to storage Database %s ....\n"%(resources.dbPath))
-  conn,cursor = createDb.getConCursor(resources.dbPath)
+  sys.stderr.write("\nConnecting to storage Database %s ....\n"%(rscs.dbPath))
+  conn,cursor = createDb.getConCursor(rscs.dbPath)
 
   if not (conn and cursor):
     sys.stderr.write("Connection to the database unsuccessful\n")

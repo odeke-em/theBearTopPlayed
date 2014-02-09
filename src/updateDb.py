@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import sys, re, subprocess

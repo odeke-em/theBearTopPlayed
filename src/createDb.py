@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import sys, re
@@ -7,8 +7,9 @@ from os import stat, path
 from time import ctime, time
 from sqlite3 import connect, OperationalError
 
+# Local modules
 import mover
-import resources
+import resources as rscs
 import createJSON
 
 ###################################CONSTANTS###################################
@@ -195,6 +196,7 @@ def rankTracks(cursor):
   ranksStr += 'TopPlayed Tracks by the BearRocks.com'.center(100, ' ' )+'\n'
   ranksStr +=  ('as last updated at: %s. Monitored from %s'%(ctime(),
    monitorStartDate[1])).center(100, ' ') + '\n'
+  ranksStr += '\tPyVersion:: %s\n'%(sys.argv[0])
 
   ranksStr +=  nLine +'\n'
   ranksStr +=  '{h:<4} {pos:>5}  {t:<40}  {a:<40}{pTs:<25}\n'.format(
@@ -206,13 +208,16 @@ def rankTracks(cursor):
 
   for eachKey in rankKeys:
     title,artist = ranks[eachKey]
+    title  = title.encode('utf-8') if rscs.pyVersion < 3 else title 
+    artist = artist.encode('utf-8') if rscs.pyVersion < 3 else artist
+
     nPlayCounts,pTimes = eachKey[0],eachKey[1:]
 
     if (lastNPlays != nPlayCounts):
       realPos = runningIndex
 
     ranksStr += '{seqPos:<5} {pos:<5} {t:<40} {a:<40} {pTs}\n'.format(
-  seqPos=runningIndex, pos=realPos, pTs=nPlayCounts,t=title,a=artist)
+     seqPos=runningIndex, pos=realPos, pTs=nPlayCounts,t=title,a=artist)
 
     runningIndex += 1
     lastNPlays = nPlayCounts
@@ -220,7 +225,7 @@ def rankTracks(cursor):
   return ranksStr
 
 def main():
-  dbPath = resources.dbPath
+  dbPath = rscs.dbPath
   conn,cursor = getConCursor(dbPath)
   print(rankTracks(cursor))
 

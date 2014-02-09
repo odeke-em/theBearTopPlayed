@@ -2,14 +2,19 @@
 
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
 
-import os, re, sys, shutil, glob
+import os
+import re
+import sys
+import  glob
+import shutil
+import tarfile
 from stat import S_ISDIR, S_ISREG
 
-import resources
+import resources as rscs
 from convDate import getIntDate
 ###########################CONSTANTS HERE################################
 TAR_SUFFIX = "tar"
-BASE_DIR_NAME = resources.RANKS_TAR_BASE_PATH
+BASE_DIR_NAME = rscs.RANKS_TAR_BASE_PATH
 #########################################################################
 existantPath = lambda path: path and os.path.exists(path)
 
@@ -74,10 +79,31 @@ def cpDir(src, dest):
 
   return shutil.copy2(src, dest)
 
-def makeArchive(base_name, fmt=TAR_SUFFIX, root_dir=None, **kwargs):
+
+def makeArchivePy3(base_name, fmt=TAR_SUFFIX, root_dir=None, **kwargs):
   if not (base_name and fmt and existantPath(root_dir)): return None
 
   return shutil.make_archive(base_name,fmt,root_dir)
+
+def makeArchivePy2(base_name, fmt=TAR_SUFFIX, root_dir=None, **kwargs):
+  archiveName = base_name + '.' + fmt
+  tarObj = tarfile.TarFile(archiveName, mode='w', **kwargs)
+  for root, dirs, paths in os.walk(root_dir):
+    fullPaths = map(lambda p : os.path.join(root, p), paths)
+    for p in fullPaths:
+      tarObj.add(p)
+
+  memberInfo = tarObj.getmembers()
+  tarObj.close()
+
+  return archiveName if len(memberInfo) else None
+
+def makeArchive(base_name, fmt=TAR_SUFFIX, root_dir=None, **kwargs):
+  archiver = makeArchivePy2 
+  if rscs.pyVersion > 2:
+    archiver = makeArchivePy3
+
+  return archiver(base_name, fmt, root_dir, **kwargs)
 
 def globPaths(targetPathSuffices):
   if not hasattr(targetPathSuffices, '__setitem__'): return None
@@ -123,7 +149,7 @@ def makeReportPackage(fileMatches=[],baseName=None,copyOnly=True):
   #Time to make the archive
   archResult = makeArchive(dirSource, TAR_SUFFIX, root_dir=dirSource)
   if not archResult:
-    print("Failed to create archive from directory %s",dirSource)
+    print("Failed to create archive from directory %s"%(dirSource))
     return -1
 
   sys.stderr.write("\033[32mCreated archive %s\033[00m\n"%(archResult))

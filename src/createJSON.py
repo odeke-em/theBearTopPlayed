@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 #Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import sys
@@ -9,7 +9,7 @@ import re
 import time
 
 import mover
-import resources
+import resources as rscs
 
 numbersOnlyCompile = re.compile('^(\d+\s?){1,}$')
 def getJSON(dbPath):
@@ -102,7 +102,7 @@ def saveJSON(dbName,destName):
  
 def archiveLoadedData():
   #Utility to manage archiving and deletion of logged files 
-  jsonCreationSuccess = saveJSON(resources.dbPath,resources.JSON_DUMP_PATH)
+  jsonCreationSuccess = saveJSON(rscs.dbPath,rscs.JSON_DUMP_PATH)
   archivingStatus = False
   if not jsonCreationSuccess:
     print("Could not create a json file of the played tracks")
@@ -111,10 +111,9 @@ def archiveLoadedData():
   dirSrc = mover.createSourceDirName()
   #Time to archive the created json, DB and ranks file
   if not mover.makeReportPackage(
-    fileMatches=[
-      "monitor_start*",resources.dbPath,resources.JSON_DUMP_PATH,
-      resources.RANKS_DUMP_PATH],
-    baseName=dirSrc,copyOnly=False):
+    fileMatches=["monitor_start*",rscs.dbPath,rscs.JSON_DUMP_PATH,rscs.RANKS_DUMP_PATH],
+    baseName=dirSrc,copyOnly=False
+  ):
     #Success here
     inodeGetter = mover.getInode
     if inodeGetter('.') != inodeGetter(dirSrc): 
