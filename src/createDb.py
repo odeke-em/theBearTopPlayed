@@ -196,7 +196,7 @@ def rankTracks(cursor):
   ranksStr += 'TopPlayed Tracks by the BearRocks.com'.center(100, ' ' )+'\n'
   ranksStr +=  ('as last updated at: %s. Monitored from %s'%(ctime(),
    monitorStartDate[1])).center(100, ' ') + '\n'
-  ranksStr += '\tPyVersion:: %s\n'%(sys.argv[0])
+  ranksStr += '\tPyVersion:: %s\n'%(rscs.pyVersion)
 
   ranksStr +=  nLine +'\n'
   ranksStr +=  '{h:<4} {pos:>5}  {t:<40}  {a:<40}{pTs:<25}\n'.format(
