@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+
+# Author: Emmanuel Odeke <odeke@ualberta.ca>
+
+import re
+from dbConn import DbLiason
+pParse = DbLiason.produceAndParse
+
+# Local module
+import extractor
+
+class TheBearHandler(object):
+    def __init__(self, baseUrl, *args, **kwargs):
+        self.baseUrl = baseUrl
+        self.__songHandler = DbLiason.HandlerLiason(baseUrl + '/songHandler')
+        self.__artistHandler = DbLiason.HandlerLiason(baseUrl + '/artistHandler')
+
+    @property
+    def songHandler(self):
+        return self.__songHandler
+
+    @property
+    def artistHandler(self):
+        return self.__artistHandler
+
+    def extractArtist(self, attrs):
+        pass
+
+    def addSong(self, songAttrs, artist):
+        artistID = self.addArtist(dict(name=artist))
+        if artistID:
+            check = pParse(self.__songHandler.getConn, dict(
+                title=songAttrs.get('title', None), artist_id=artistID,
+                select='id', playTime=songAttrs.get('playTime', None))
+            )
+            print(check)
+
+            if not (check and check.get('data', None)):
+                songAttrs['artist_id'] = artistID
+                cResponse = pParse(self.__songHandler.postConn, songAttrs)
+            else:
+                print(check)
+
+    def updateSong(self, songAttrs):
+        pass
+
+    def deleteSong(self, attrs):
+        pass
+
+    def addArtist(self, attrs):
+        pResponse = pParse(
+            self.__artistHandler.getConn, dict(
+                name=attrs.get('name', None), format='short'
+            )
+        ) 
+        if pResponse:
+            data = pResponse.get('data', None)
+            if data:
+                return data[0].get('data', None)
+
+        cResponse = pParse(self.__artistHandler.postConn, attrs)
+        if cResponse:
+            print(cResponse)
+            data  = cResponse.get('data', None)
+            if hasattr(data, 'get'):
+                return data.get('id', None)
+        
+    def updateArtst(self, attrs):
+        artist = attrs.get('artist', None)
+
+        parsedResponse = pParse(self.__artistHandler, dict(name=artist))
+        if parsedResponse:
+            data = parsedResponse.get('data', None)
+            if data:
+                return data[0].get('id', -1)
+
+    def deleteArtist(self, attrs):
+        return self.__artistHandler.deleteConn(attrs)
+
+    def getArtist(self, attrs):
+        return self.__artistHandler.getConn(attrs)
+
+    def getSong(self, attrs):
+        return self.__songHandler.getConn(attrs)
+
+    def checkArtist(self, artistName):
+        parsedResponse = pParse(
+            self.__artistHandler.getConn, dict(name=artistName)
+        )
+
+        if parsedResponse:
+            data = parsedResponse.get('data', None)
+            if data: return True
+
+        return False
+
+def main():
+    tbH = TheBearHandler('http://127.0.0.1:8000/thebear')
+    crawled = extractor.crawl()
+    for tup in crawled:
+        artist, title, playTime, uri = tup
+        artist = re.sub('\s', '_', artist) 
+        title = re.sub('\s', '_', title) 
+        tbH.addSong(dict(title=title, uri=uri, playTime=playTime), artist)
+
+if __name__ == '__main__':
+    main()

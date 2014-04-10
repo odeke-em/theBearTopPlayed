@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 '''
   Author: Emmanuel Odeke <odeke@ualberta.ca>
    Module to retrieve data from url, using a customized user agent.
@@ -6,31 +6,31 @@
 '''
 
 import re
-import resources as rscs # Local module
+import resources as rscs #  Local module
 
 def site_opener(url, stderr,errorVerbosity, user_agent=rscs.UBUNTU_UAGENT):
-  #Input: url->string, stderr -> file stream to log errors, 
-  #       errorVerbosity ->Boolean to determine if
-  #        any errors and excepts can be logged to standard error
-  #Output: Logs to stderr errors if boolean 'errorVerbosity' is set
-  #Returns: Retrieved data retrieved  or None on failure
-  #Make sure that the stream passed in as the standard error, can be written to
-  # and flushed else throw an exception
+  # Input: url->string, stderr -> file stream to log errors, 
+  #        errorVerbosity ->Boolean to determine if
+  #         any errors and excepts can be logged to standard error
+  # Output: Logs to stderr errors if boolean 'errorVerbosity' is set
+  # Returns: Retrieved data retrieved  or None on failure
+  # Make sure that the stream passed in as the standard error, can be written to
+  #  and flushed else throw an exception
   if (not (hasattr(stderr,'write') and hasattr(stderr,'flush'))): 
     raise Exception("The standard error stream needs to have methods 'write'"+\
                     " and 'flush' defined")
 
   try:
-    #Building our modified url opener to enable the use of a fake user-agent
+    # Building our modified url opener to enable the use of a fake user-agent
     modified_opener   = rscs.urlRequester.build_opener()
     user_agent_tuple = ('user-agent', user_agent)
     modified_opener.addheaders = [user_agent_tuple]
 
-    data = modified_opener.open(url) #Use the modified url opener to open url
-  except Exception, e:
+    data = modified_opener.open(url) # Use the modified url opener to open url
+  except Exception as e:
     print(e)
-    if (errorVerbosity): #Log the error to std
-      #Possibly corrupted url or no internet connectionerr
+    if (errorVerbosity): # Log the error to std
+      # Possibly corrupted url or no internet connectionerr
       if (isinstance(e, rscs.URLError)): 
         errMsg = "Unknown service %s or check your Internet connection"%(url)
       else:
@@ -40,13 +40,12 @@ def site_opener(url, stderr,errorVerbosity, user_agent=rscs.UBUNTU_UAGENT):
       stderr.flush()
     return None
 
-  print("Data out")
   try:
     outdata = data.read()
-    #Try decoding the data
+    # Try decoding the data
     decoded_data = outdata.decode() if rscs.pyVersion > 3 else outdata.decode('utf-8')
   except Exception as e:
-    #Manage error later#
+    # Manage error later# 
     if (errorVerbosity):
       stderr.write("Decoding error: errorBelow: %s\n"%(e.__str__()))
       stderr.flush()

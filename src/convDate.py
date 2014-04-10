@@ -65,16 +65,20 @@ def concatDate(timeStr, dateStr):
   if (len(m_d_y) != 3): return -1 #Failed to get time fields
 
   hh = int(hh_mm_apm[0])
-  mm = int(hh_mm_apm[1])
-  apm = hh_mm_apm[2] #String: either 'AM' or 'PM'
+  mm = hh_mm_apm[1]
+  apm = str(hh_mm_apm[2]) #String: either 'AM' or 'PM'
 
   #Convert hours to 24 hour clock -> add +12 if PM 
   if (re.search(apm, PM)):
     hh +=  12
+    hh %= 24
   month,day,year = m_d_y
-  joinedDate = list(map(lambda s : "{0:0>2}".format(s),[year,month,day,hh,mm]))
-  return "".join(joinedDate)
 
+  timeTuple = tuple(map(lambda t: int(t), (year, month, day, hh, mm)))
+  return datetime(*timeTuple).strftime('%s')
+
+  # joinedDate = list(map(lambda s : "{0:0>2}".format(s),[year,month,day,hh,mm]))
+  # return "".join(joinedDate)
 
 if __name__ == '__main__':
   #Simple visual verification

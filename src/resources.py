@@ -7,7 +7,7 @@ urlRequester = None
 
 if pyVersion > 2:
   import urllib.request
-  import urllib.error.URLError as URLError
+  from urllib.error import URLError
   urlRequester = urllib.request
   byteEncodingArgs = ('utf-8',)
 else:
