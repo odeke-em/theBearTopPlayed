@@ -33,11 +33,11 @@ class TheBearHandler(object):
                 title=songAttrs.get('title', None), artist_id=artistID,
                 select='id', playTime=songAttrs.get('playTime', None))
             )
-            print(check)
 
             if not (check and check.get('data', None)):
                 songAttrs['artist_id'] = artistID
                 cResponse = pParse(self.__songHandler.postConn, songAttrs)
+                print(cResponse)
             else:
                 print(check)
 
@@ -50,13 +50,14 @@ class TheBearHandler(object):
     def addArtist(self, attrs):
         pResponse = pParse(
             self.__artistHandler.getConn, dict(
-                name=attrs.get('name', None), format='short'
+                name=attrs.get('name', None), select='id'
             )
         ) 
+
         if pResponse:
             data = pResponse.get('data', None)
             if data:
-                return data[0].get('data', None)
+                return data[0].get('id', None)
 
         cResponse = pParse(self.__artistHandler.postConn, attrs)
         if cResponse:
