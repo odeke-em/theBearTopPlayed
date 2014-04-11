@@ -16,7 +16,7 @@ BEAR_ROCKS_URL="http://www.thebearrocks.com/broadcasthistory.aspx"
 dateStampRegex = \
  r'<option selected="selected" value="(\d+/\d+/\d{4})">(\d+/\d+/\d{4})</option>'
 timeStampRegex     = r'(\d?:?\d+:\d+\s[AP]?M)'
-linkTitleRegex     = r'<a href="(.*)"\s+title="\s*(.*)\s*-\s*(.*)\s*">'
+linkTitleRegex     = r'<a href="(.*)"\s+title="\s*(.*)\s*-\s*(.*)\s?">'
 
 timeStampCompile = re.compile(timeStampRegex)
 linkTitleCompile = re.compile(linkTitleRegex)
