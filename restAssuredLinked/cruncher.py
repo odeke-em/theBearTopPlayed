@@ -27,8 +27,9 @@ class TheBearHandler(object):
     def extractArtist(self, attrs):
         pass
 
-    def addSong(self, songAttrs, artist):
-        artistID = self.addArtist(dict(name=artist))
+    def addSong(self, songAttrs, artistAttrs):
+        artist, artistURI = artistAttrs
+        artistID = self.addArtist(dict(name=artist, uri=artistURI))
         if artistID:
             check = pParse(self.__songHandler.getConn, dict(
                 title=songAttrs.get('title', None), artist_id=artistID,
@@ -113,7 +114,7 @@ def main():
         artist = re.sub('\s', '_', artist) 
         title = re.sub('\s', '_', title) 
         dbHandler.addSong(
-            dict(title=title, uri=uri, playTime=playTime), artist
+            dict(title=title, playTime=playTime), (artist, uri)
         )
 
 if __name__ == '__main__':
