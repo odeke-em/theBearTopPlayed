@@ -3,11 +3,12 @@
 # Author: Emmanuel Odeke <odeke@ualberta.ca>
 
 import re
-from dbConn import DbLiason
-pParse = DbLiason.produceAndParse
+import sys
 
 # Local module
 import extractor
+from dbConn import DbLiason
+pParse = DbLiason.produceAndParse
 
 class TheBearHandler(object):
     def __init__(self, baseUrl, *args, **kwargs):
@@ -96,13 +97,24 @@ class TheBearHandler(object):
         return False
 
 def main():
-    tbH = TheBearHandler('http://127.0.0.1:8000/thebear')
+    restAssuredAccessibleUrl = 'http://127.0.0.1:8000/thebear'
+
+    argc = len(sys.argv)
+    if argc > 1:
+        restAssuredAccessibleUrl = sys.argv[1]
+
+    print(restAssuredAccessibleUrl)
+    # sys.exit(0)
+    dbHandler = TheBearHandler(restAssuredAccessibleUrl)
+
     crawled = extractor.crawl()
     for tup in crawled:
         artist, title, playTime, uri = tup
         artist = re.sub('\s', '_', artist) 
         title = re.sub('\s', '_', title) 
-        tbH.addSong(dict(title=title, uri=uri, playTime=playTime), artist)
+        dbHandler.addSong(
+            dict(title=title, uri=uri, playTime=playTime), artist
+        )
 
 if __name__ == '__main__':
     main()
