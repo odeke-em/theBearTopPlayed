@@ -50,11 +50,14 @@ class TheBearHandler(object):
         pass
 
     def addArtist(self, attrs):
-        pResponse = pParse(
-            self.__artistHandler.getConn, dict(
-                name=attrs.get('name', None), select='id'
-            )
-        ) 
+        uri = attrs.get('uri', None)
+        queryDict = dict(select='id')
+        if uri:
+            queryDict['uri'] = uri
+        else:
+            queryDict['name'] =  attrs.get('name', None)
+
+        pResponse = pParse(self.__artistHandler.getConn, queryDict)
 
         if pResponse:
             data = pResponse.get('data', None)
@@ -97,25 +100,25 @@ class TheBearHandler(object):
 
         return False
 
-def main():
-    restAssuredAccessibleUrl = 'http://127.0.0.1:8000/thebear'
 
-    argc = len(sys.argv)
-    if argc > 1:
-        restAssuredAccessibleUrl = sys.argv[1]
-
-    print(restAssuredAccessibleUrl)
-    # sys.exit(0)
-    dbHandler = TheBearHandler(restAssuredAccessibleUrl)
+def crunch(srcUrl=None):
+    dbHandler = TheBearHandler(srcUrl if srcUrl else 'http://127.0.0.1:8000/thebear')
 
     crawled = extractor.crawl()
     for tup in crawled:
         artist, title, playTime, uri = tup
-        artist = re.sub('\s', '_', artist) 
-        title = re.sub('\s', '_', title) 
+        artist = re.sub('\s', '_', artist.strip(' ')) 
+        title = re.sub('\s', '_', title.strip(' ')) 
         dbHandler.addSong(
             dict(title=title, playTime=playTime), (artist, uri)
         )
 
+def main():
+    restAssuredAccessibleUrl = None
+    argc = len(sys.argv)
+    if argc > 1:
+        restAssuredAccessibleUrl = sys.argv[1]
+
+    crunch(restAssuredAccessibleUrl)
 if __name__ == '__main__':
     main()
