@@ -1,0 +1,3 @@
+[submodule "restAssuredLinked/resty"]
+	path = restAssuredLinked/resty
+	url = git@github.com:odeke-em/resty.git

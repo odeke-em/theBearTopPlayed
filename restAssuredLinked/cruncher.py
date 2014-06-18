@@ -1,124 +1,51 @@
 #!/usr/bin/env python3
-
 # Author: Emmanuel Odeke <odeke@ualberta.ca>
-
 import re
 import sys
 
 # Local module
 import extractor
-from dbConn import DbLiason
-pParse = DbLiason.produceAndParse
+from resty import restDriver
 
-class TheBearHandler(object):
-    def __init__(self, baseUrl, *args, **kwargs):
-        self.baseUrl = baseUrl
-        self.__songHandler = DbLiason.HandlerLiason(baseUrl + '/songHandler')
-        self.__artistHandler = DbLiason.HandlerLiason(baseUrl + '/artistHandler')
+produceAndParse = restDriver.produceAndParse
 
-    @property
-    def songHandler(self):
-        return self.__songHandler
-
-    @property
-    def artistHandler(self):
-        return self.__artistHandler
-
-    def extractArtist(self, attrs):
-        pass
-
-    def addSong(self, songAttrs, artistAttrs):
-        artist, artistURI = artistAttrs
-        artistID = self.addArtist(dict(name=artist, uri=artistURI))
-        if artistID:
-            check = pParse(self.__songHandler.getConn, dict(
-                title=songAttrs.get('title', None), artist_id=artistID,
-                select='id', playTime=songAttrs.get('playTime', None))
-            )
-
-            if not (check and check.get('data', None)):
-                songAttrs['artist_id'] = artistID
-                cResponse = pParse(self.__songHandler.postConn, songAttrs)
-                print(cResponse)
-            else:
-                print(check)
-
-    def updateSong(self, songAttrs):
-        pass
-
-    def deleteSong(self, attrs):
-        pass
-
-    def addArtist(self, attrs):
-        uri = attrs.get('uri', None)
-        queryDict = dict(select='id')
-        if uri:
-            queryDict['uri'] = uri
-        else:
-            queryDict['name'] =  attrs.get('name', None)
-
-        pResponse = pParse(self.__artistHandler.getConn, queryDict)
-
-        if pResponse:
-            data = pResponse.get('data', None)
-            if data:
-                return data[0].get('id', None)
-
-        cResponse = pParse(self.__artistHandler.postConn, attrs)
-        if cResponse:
-            print(cResponse)
-            data  = cResponse.get('data', None)
-            if hasattr(data, 'get'):
-                return data.get('id', None)
-        
-    def updateArtst(self, attrs):
-        artist = attrs.get('artist', None)
-
-        parsedResponse = pParse(self.__artistHandler, dict(name=artist))
-        if parsedResponse:
-            data = parsedResponse.get('data', None)
-            if data:
-                return data[0].get('id', -1)
-
-    def deleteArtist(self, attrs):
-        return self.__artistHandler.deleteConn(attrs)
-
-    def getArtist(self, attrs):
-        return self.__artistHandler.getConn(attrs)
-
-    def getSong(self, attrs):
-        return self.__songHandler.getConn(attrs)
-
-    def checkArtist(self, artistName):
-        parsedResponse = pParse(
-            self.__artistHandler.getConn, dict(name=artistName)
-        )
-
-        if parsedResponse:
-            data = parsedResponse.get('data', None)
-            if data: return True
-
-        return False
-
-
-def crunch(srcUrl=None):
-    dbHandler = TheBearHandler(srcUrl if srcUrl else 'http://127.0.0.1:8000/thebear')
+def crunch(address='http://127.0.0.1', port='8000'):
+    connector = restDriver.RestDriver(address, port)
+    connector.registerLiason('Song', '/thebear/songHandler')
+    connector.registerLiason('Artist', '/thebear/artistHandler')
 
     crawled = extractor.crawl()
     for tup in crawled:
-        artist, title, playTime, uri = tup
-        artist = re.sub('\s', '_', artist.strip(' ')) 
-        title = re.sub('\s', '_', title.strip(' ')) 
-        dbHandler.addSong(
-            dict(title=title, playTime=playTime), (artist, uri)
-        )
+        artistName, title, playTime, artistURI = tup
+        artistName = re.sub('\s', '_', artistName.strip(' ')) 
+        title = re.sub('\s', '_', title.strip(' '))
+
+        # Unicode is tripping out comparisons, and for starters we shall be using 'uri' as unique attr 
+        artistNameInfo = produceAndParse(connector.getArtists, uri=artistURI)
+        readInfo = artistNameInfo.get('data', None)
+
+        if not readInfo:
+            readInfo = produceAndParse(connector.newArtist, name=artistName, uri=artistURI)
+            if not (isinstance(readInfo, dict) and readInfo.get('status_code', 400) == 200):
+                print('Failed to create new artist. Data back', readInfo)
+                continue
+            
+            readInfo = readInfo.get('data', {})
+            print('created Artist', readInfo)
+        else:
+            readInfo = readInfo[0] # Head element
+
+        songContent = {'title': title, 'artist_id': readInfo.get('id', -1), 'playTime': playTime}
+        queriedInfo = produceAndParse(connector.getSongs, **songContent)
+        readSongInfo = queriedInfo.get('data', None)
+        if not readSongInfo:
+            print('Freshly creating', songContent, produceAndParse(connector.newSong, **songContent))
+        else:
+            print('Already registered', songContent)
 
 def main():
-    restAssuredAccessibleUrl = None
-    argc = len(sys.argv)
-    if argc > 1:
-        restAssuredAccessibleUrl = sys.argv[1]
+    args, options = restDriver.cliParser()
+    crunch(args.ip, args.port)
 
-    crunch(restAssuredAccessibleUrl)
 if __name__ == '__main__':
     main()
