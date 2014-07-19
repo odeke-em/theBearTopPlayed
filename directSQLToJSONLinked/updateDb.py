@@ -10,9 +10,6 @@ from parser import cliParser
 
 RANKS_STORAGE = resources.RANKS_DUMP_PATH
 
-def supportsRfKill():
-  return os.uname()[0] in ['Linux']
-
 def updateDb(timeout_mins, PRINT_RANKS_BOOL=True):
   # Calls module 'thebear.main' and prints ranks retrieved if 'PRINT_RANKS'
   #  is set. Sleeps for a 'timeout_mins' interval, and refreshes
@@ -51,7 +48,7 @@ def updateDb(timeout_mins, PRINT_RANKS_BOOL=True):
       else:
         sys.stderr.write("\033[91mFailed to write ranks to file: '%s'\033[00m\n"%(RANKS_STORAGE))
 
-      if (PRINT_RANKS_BOOL):
+      if PRINT_RANKS_BOOL:
           print(ranksCompiled)
       sleepBeforeRefresh(timeout_mins)
 
@@ -69,8 +66,8 @@ def sleepBeforeRefresh(timeout_mins,BRUTE_WINDOW_PROTECTION=True):
    # Sleep for the requested minutes
    # Input: 'timeout_mins' -> unsigned value [float, int] in minutes to sleep for
    # Output: None
-   assert(hasattr(timeout_mins, '__divmod__')) #Only either a float or int
-   tSleep_secs = timeout_mins * 60 #Sleep time converted to seconds
+   assert(hasattr(timeout_mins, '__divmod__')) # Only either a float or int
+   tSleep_secs = timeout_mins * 60 # Sleep time converted to seconds
 
    # Get the current time in seconds since the epoch
    curTimeSecs = time()
@@ -106,7 +103,7 @@ if __name__ == '__main__':
     timeout_value = str(args.timeout)
 
     if (re.search('^(\d+)(\.\d+)?$',timeout_value)):
-      secTimeOut = float(timeout_value)
+      minTimeout = float(timeout_value)
 
     else: raise ValueError("Timeout must be an integer or a simple float\n")
 
@@ -114,7 +111,9 @@ if __name__ == '__main__':
 
   except ValueError as e:
     sys.stderr.write(e.__str__())
-    # status,output = subprocess.getstatusoutput(wifiManage('unblock'))
-
+    '''
+    if resources.supportsRfKill():
+        status,output = subprocess.getstatusoutput(wifiManage('unblock'))
+    '''
   else:
-    updateDb(secTimeOut, PRINT_RANKS_BOOL)
+    updateDb(minTimeout, PRINT_RANKS_BOOL)

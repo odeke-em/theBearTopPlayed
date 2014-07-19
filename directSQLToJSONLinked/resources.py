@@ -25,6 +25,9 @@ JSON_DUMP_PATH= "./reports/ranks.json"
 RANKS_DUMP_PATH = "./reports/ranks.rk"
 RANKS_TAR_BASE_PATH = "./reports/rankBack"
 
+def supportsRfKill():
+  return os.uname()[0] in ['Linux']
+
 def delegateFileWriting(path, data, isBinary=False):
   if not path:
     return -1
@@ -39,6 +42,7 @@ def delegateFileWriting(path, data, isBinary=False):
             sys.stderr.write('\033[42mSuccessfully created directory: %s\033[00m\n'%(dirPath))
     elif not os.access(dirPath, os.W_OK):
         sys.stderr.write('No write access to directory: %s\n'%(dirPath))
+        sys.stderr.flush()
         return -1
 
   # Now good to go
