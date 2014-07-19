@@ -27,17 +27,18 @@ def site_opener(url, stderr,errorVerbosity, user_agent=rscs.UBUNTU_UAGENT):
     modified_opener.addheaders = [user_agent_tuple]
 
     data = modified_opener.open(url) #Use the modified url opener to open url
-  except Exception, e:
-    print(e)
+  except Exception:
+    # print(e)
     if (errorVerbosity): #Log the error to std
       #Possibly corrupted url or no internet connectionerr
-      if (isinstance(e, rscs.URLError)): 
-        errMsg = "Unknown service %s or check your Internet connection"%(url)
-      else:
-        errMsg = "While opening url '%s' error: %s encountered"%(url, e.__str__())
+      # if (isinstance(e, rscs.URLError)): 
+      errMsg = "Unknown service %s or check your Internet connection"%(url)
+      # else:
+      #   errMsg = "While opening url '%s' error: %s encountered"%(url, e.__str__())
 
       stderr.write("\033[31m%s\033[00m\n"%(errMsg))
       stderr.flush()
+
     return None
 
   print("Data out")
