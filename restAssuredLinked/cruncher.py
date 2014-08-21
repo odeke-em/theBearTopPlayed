@@ -7,8 +7,6 @@ import sys
 import extractor
 from resty import restDriver
 
-produceAndParse = restDriver.produceAndParse
-
 def crunch(address='http://127.0.0.1', port='8000'):
     connector = restDriver.RestDriver(address, port)
     connector.registerLiason('Song', '/thebear/songHandler')
@@ -21,25 +19,25 @@ def crunch(address='http://127.0.0.1', port='8000'):
         title = re.sub('\s', '_', title.strip(' '))
 
         # Unicode is tripping out comparisons, and for starters we shall be using 'uri' as unique attr 
-        artistNameInfo = produceAndParse(connector.getArtists, uri=artistURI)
-        readInfo = artistNameInfo.get('data', None)
+        artistNameInfo = connector.getArtists(uri=artistURI)
+        readInfo = artistNameInfo.get('value', {}).get('data', None)
 
-        if not readInfo:
-            readInfo = produceAndParse(connector.newArtist, name=artistName, uri=artistURI)
+        if not (readInfo and len(readInfo) >= 1):
+            readInfo = connector.newArtist(name=artistName, uri=artistURI)
             if not (isinstance(readInfo, dict) and readInfo.get('status_code', 400) == 200):
                 print('Failed to create new artist. Data back', readInfo)
                 continue
-            
-            readInfo = readInfo.get('data', {})
+           
+            readInfo = readInfo.get('value', {}).get('data', None)
             print('created Artist', readInfo)
         else:
             readInfo = readInfo[0] # Head element
 
         songContent = {'title': title, 'artist_id': readInfo.get('id', -1), 'playTime': playTime}
-        queriedInfo = produceAndParse(connector.getSongs, **songContent)
+        queriedInfo = connector.getSongs(**songContent)
         readSongInfo = queriedInfo.get('data', None)
-        if not readSongInfo:
-            print('Freshly creating', songContent, produceAndParse(connector.newSong, **songContent))
+        if not (readSongInfo and len(readSongInfo) >= 1):
+            print('Freshly creating', songContent, connector.newSong(**songContent))
         else:
             print('Already registered', songContent)
 
