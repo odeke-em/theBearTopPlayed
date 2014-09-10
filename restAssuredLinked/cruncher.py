@@ -35,7 +35,7 @@ def crunch(address='http://127.0.0.1', port='8000'):
 
         songContent = {'title': title, 'artist_id': readInfo.get('id', -1), 'playTime': playTime}
         queriedInfo = connector.getSongs(**songContent)
-        readSongInfo = queriedInfo.get('data', None)
+        readSongInfo = queriedInfo.get('value', {}).get('data', None)
         if not (readSongInfo and len(readSongInfo) >= 1):
             print('Freshly creating', songContent, connector.newSong(**songContent))
         else:
